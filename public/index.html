@@ -1,0 +1,151 @@
+<!-- <!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MentorConnect - Agenda tu Sesión</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">📅</div>
+                    <h1>Asturias Mentorías</h1>
+                </div>
+                <button onclick="showLogin()" class="login-btn">
+                    🔑 Acceso Staff
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="hero">
+                <h1>Agenda tu Sesión de Mentoría</h1>
+                <p>Conecta con mentores expertos y acelera tu crecimiento profesional. 
+                   Reserva tu cita de manera rápida y sencilla.</p>
+            </div>
+
+            <!-- Appointment Form -->
+            <div class="form-card">
+                <div class="form-header">
+                    <h2>Información de la Cita</h2>
+                    <p>Completa todos los campos para agendar tu sesión</p>
+                </div>
+                
+                <form id="appointmentForm" class="appointment-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userName">Nombre Completo <span class="required">*</span></label>
+                            <input type="text" id="userName" name="userName" placeholder="Juan Pérez" required>
+                            <span class="error-message" id="userName-error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="userEmail">Correo Electrónico <span class="required">*</span></label>
+                            <input type="email" id="userEmail" name="userEmail" placeholder="juan@ejemplo.com" required>
+                            <span class="error-message" id="userEmail-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Teléfono <span class="required">*</span></label>
+                            <input type="tel" id="phone" name="phone" placeholder="+57 300 123 4567" required>
+                            <span class="error-message" id="phone-error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="numberDocument">Número de Documento <span class="required">*</span></label>
+                            <input type="text" id="numberDocument" name="numberDocument" placeholder="1234567890" required>
+                            <span class="error-message" id="numberDocument-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="programId">Programa <span class="required">*</span></label>
+                            <select id="programId" name="programId" required>
+                                <option value="">Selecciona un programa</option>
+                            </select>
+                            <span class="error-message" id="programId-error"></span>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="typeOfAppointmentId">Tipo de Cita <span class="required">*</span></label>
+                            <select id="typeOfAppointmentId" name="typeOfAppointmentId" required>
+                                <option value="">Selecciona el tipo de cita</option>
+                            </select>
+                            <span class="error-message" id="typeOfAppointmentId-error"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="date">Fecha y Hora <span class="required">*</span></label>
+                        <input type="datetime-local" id="date" name="date" required>
+                        <span class="error-message" id="date-error"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="details">Detalles Adicionales</label>
+                        <textarea id="details" name="details" rows="4" 
+                                placeholder="Describe brevemente los temas que te gustaría abordar en la sesión..." 
+                                maxlength="200"></textarea>
+                        <div class="char-counter">
+                            <span id="charCount">0</span>/200 caracteres
+                        </div>
+                        <span class="error-message" id="details-error"></span>
+                    </div>
+
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        📅 Agendar Cita
+                    </button>
+                </form>
+            </div>
+        </main>
+
+        <!-- Success Modal -->
+        <div id="successModal" class="modal hidden">
+            <div class="modal-content">
+                <h3>¡Cita agendada exitosamente! ✅</h3>
+                <p>Recibirás un correo de confirmación pronto.</p>
+                <button onclick="closeSuccessModal()" class="modal-btn">Cerrar</button>
+            </div>
+        </div>
+
+        <!-- Login Modal -->
+        <div id="loginModal" class="modal hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Iniciar Sesión</h3>
+                    <button onclick="closeLogin()" class="close-btn">×</button>
+                </div>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" name="email" placeholder="admin@mentorconnect.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" name="password" placeholder="••••••••" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Rol</label>
+                        <select id="role" name="role" required>
+                            <option value="">Selecciona tu rol</option>
+                            <option value="admin">Administrador</option>
+                            <option value="mentor">Mentor</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="submit-btn">🔑 Iniciar Sesión</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> -->

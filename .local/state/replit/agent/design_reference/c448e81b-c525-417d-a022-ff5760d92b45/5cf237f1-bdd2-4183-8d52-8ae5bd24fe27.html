@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Citas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'sans': ['Inter', 'ui-sans-serif', 'system-ui'],
+                }
+            }
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body class="bg-slate-50 font-sans">
+    <!-- @COMPONENT: AppContainer [main application wrapper] -->
+    <div id="appContainer">
+        
+        <!-- @COMPONENT: PublicBookingInterface [client appointment booking] -->
+        <div id="publicBooking" class="interface-view">
+            <!-- Modern header with branding -->
+            <header class="bg-white shadow-sm border-b border-slate-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-calendar-check text-white text-sm"></i>
+                            </div>
+                            <h1 class="text-xl font-semibold text-slate-900">MentorConnect</h1>
+                        </div>
+                        <button onclick="showLoginModal()" class="text-slate-600 hover:text-blue-600 font-medium transition-colors">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Acceso Staff
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Hero section with appointment booking form -->
+            <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="text-center mb-12">
+                    <h1 class="text-4xl font-bold text-slate-900 mb-4">Agenda tu Sesión de Mentoría</h1>
+                    <p class="text-xl text-slate-600 max-w-2xl mx-auto">Conecta con mentores expertos y acelera tu crecimiento profesional. Reserva tu cita de manera rápida y sencilla.</p>
+                </div>
+
+                <!-- @COMPONENT: AppointmentBookingForm [main booking form] -->
+                <div class="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
+                        <h2 class="text-2xl font-semibold text-white">Información de la Cita</h2>
+                        <p class="text-blue-100 mt-2">Completa todos los campos para agendar tu sesión</p>
+                    </div>
+                    
+                    <form id="appointmentForm" class="p-8 space-y-6">
+                        <!-- @STATE: formData:object = {} -->
+                        <!-- @STATE: formErrors:object = {} -->
+                        
+                        <!-- Personal Information Section -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label for="userName" class="block text-sm font-medium text-slate-700">
+                                    Nombre Completo <span class="text-red-500">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="userName" 
+                                    name="userName"
+                                    data-bind="formData.userName"
+                                    data-mock="true"
+                                    placeholder="Juan Pérez"
+                                    maxlength="50"
+                                    required
+                                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                />
+                                <div class="error-message hidden text-red-500 text-sm mt-1" id="userName-error"></div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="userEmail" class="block text-sm font-medium text-slate-700">
+                                    Correo Electrónico <span class="text-red-500">*</span>
+                                </label>
+                                <input 
+                                    type="email" 
+                                    id="userEmail" 
+                                    name="userEmail"
+                                    data-bind="formData.userEmail"
+                                    data-mock="true"
+                                    placeholder="juan@ejemplo.com"
+                                    required
+                                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                />
+                                <div class="error-message hidden text-red-500 text-sm mt-1" id="userEmail-error"></div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label for="phone" class="block text-sm font-medium text-slate-700">
+                                    Teléfono <span class="text-red-500">*</span>
+                                </label>
+                                <input 
+                                    type="tel" 
+                                    id="phone" 
+                                    name="phone"
+                                    data-bind="formData.phone"
+                                    data-mock="true"
+                                    placeholder="+57 300 123 4567"
+                                    minlength="10"
+                                    maxlength="15"
+                                    required
+                                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                />
+                                <div class="error-message hidden text-red-500 text-sm mt-1" id="phone-error"></div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="numberDocument" class="block text-sm font-medium text-slate-700">
+                                    Número de Documento <span class="text-red-500">*</span>
+                                </label>
+                                <input 
+                                    type="text" 
+                                    id="numberDocument" 
+                                    name="numberDocument"
+                                    data-bind="formData.numberDocument"
+                                    data-mock="true"
+                                    placeholder="1234567890"
+                                    required
+                                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                />
+                                <div class="error-message hidden text-red-500 text-sm mt-1" id="numberDocument-error"></div>
+                            </div>
+                        </div>
+
+                        <!-- Program and Appointment Type -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label for="programId" class="block text-sm font-medium text-slate-700">
+                                    Programa <span class="text-red-500">*</span>
+                                </label>
+                                <select 
+                                    id="programId" 
+                                    name="programId"
+                                    data-bind="formData.programId"
+                                    required
+                                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                >
+                                    <option value="" data-mock="true">Selecciona un programa</option>
+                                    <option value="1" data-mock="true">Desarrollo Web Full Stack</option>
+                                    <option value="2" data-mock="true">Data Science & Analytics</option>
+                                    <option value="3" data-mock="true">UX/UI Design</option>
+                                    <option value="4" data-mock="true">Marketing Digital</option>
+                                    <option value="5" data-mock="true">Emprendimiento</option>
+                                </select>
+                                <div class="error-message hidden text-red-500 text-sm mt-1" id="programId-error"></div>
+                            </div>
+
+                            <div class="space-y-2">
+                                <label for="typeOfAppointmentId" class="block text-sm font-medium text-slate-700">
+                                    Tipo de Cita <span class="text-red-500">*</span>
+                                </label>
+                                <select 
+                                    id="typeOfAppointmentId" 
+                                    name="typeOfAppointmentId"
+                                    data-bind="formData.typeOfAppointmentId"
+                                    required
+                                    class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                >
+                                    <option value="" data-mock="true">Selecciona el tipo de cita</option>
+                                    <option value="1" data-mock="true">Consulta Inicial (30 min)</option>
+                                    <option value="2" data-mock="true">Sesión de Mentoría (60 min)</option>
+                                    <option value="3" data-mock="true">Revisión de Proyecto (45 min)</option>
+                                    <option value="4" data-mock="true">Consulta Express (15 min)</option>
+                                </select>
+                                <div class="error-message hidden text-red-500 text-sm mt-1" id="typeOfAppointmentId-error"></div>
+                            </div>
+                        </div>
+
+                        <!-- Date and Time Selection -->
+                        <div class="space-y-2">
+                            <label for="date" class="block text-sm font-medium text-slate-700">
+                                Fecha y Hora <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                type="datetime-local" 
+                                id="date" 
+                                name="date"
+                                data-bind="formData.date"
+                                required
+                                class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            />
+                            <div class="error-message hidden text-red-500 text-sm mt-1" id="date-error"></div>
+                        </div>
+
+                        <!-- Details Section -->
+                        <div class="space-y-2">
+                            <label for="details" class="block text-sm font-medium text-slate-700">
+                                Detalles Adicionales
+                            </label>
+                            <textarea 
+                                id="details" 
+                                name="details"
+                                data-bind="formData.details"
+                                data-mock="true"
+                                placeholder="Describe brevemente los temas que te gustaría abordar en la sesión..."
+                                maxlength="200"
+                                rows="4"
+                                class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
+                            ></textarea>
+                            <div class="flex justify-between items-center">
+                                <div class="error-message hidden text-red-500 text-sm" id="details-error"></div>
+                                <span class="text-sm text-slate-500" id="details-counter">0/200 caracteres</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="pt-6">
+                            <button 
+                                type="submit"
+                                data-event="click:handleAppointmentSubmit"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            >
+                                <i class="fas fa-calendar-plus mr-2"></i>
+                                Agendar Cita
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <!-- @END_COMPONENT: AppointmentBookingForm -->
+            </main>
+        </div>
+        <!-- @END_COMPONENT: PublicBookingInterface -->
+
+        <!-- @COMPONENT: AdminInterface [admin dashboard] -->
+        <div id="adminInterface" class="interface-view hidden">
+            <!-- Admin Navigation -->
+            <nav class="bg-white shadow-sm border-b border-slate-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center space-x-8">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-user-shield text-white text-sm"></i>
+                                </div>
+                                <h1 class="text-xl font-semibold text-slate-900">Panel de Administración</h1>
+                            </div>
+                            
+                            <div class="hidden md:flex space-x-6">
+                                <button onclick="showAdminTab('appointments')" class="admin-tab-btn active text-blue-600 font-medium">
+                                    <i class="fas fa-calendar-alt mr-2"></i>Citas
+                                </button>
+                                <button onclick="showAdminTab('mentors')" class="admin-tab-btn text-slate-600 hover:text-blue-600 font-medium">
+                                    <i class="fas fa-users mr-2"></i>Mentores
+                                </button>
+                                <button onclick="showAdminTab('reports')" class="admin-tab-btn text-slate-600 hover:text-blue-600 font-medium">
+                                    <i class="fas fa-chart-bar mr-2"></i>Reportes
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-slate-600" data-bind="currentUser.name" data-mock="true">Admin User</span>
+                            <button onclick="logout()" class="text-slate-600 hover:text-red-600 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Admin Content Area -->
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                
+                <!-- @COMPONENT: AppointmentsManagement [appointments tab content] -->
+                <div id="adminAppointments" class="admin-tab-content">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900">Gestión de Citas</h2>
+                            <p class="text-slate-600 mt-1">Administra y asigna mentores a las citas programadas</p>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <select class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option data-mock="true">Todas las citas</option>
+                                <option data-mock="true">Pendientes</option>
+                                <option data-mock="true">Asignadas</option>
+                                <option data-mock="true">Completadas</option>
+                            </select>
+                            <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                <i class="fas fa-filter mr-2"></i>Filtrar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Appointments Table -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50">
+                            <h3 class="text-lg font-semibold text-slate-900">Lista de Citas</h3>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Cliente</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Programa</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Tipo</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Fecha</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Estado</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Mentor</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    <!-- @MAP: appointments.map(appointment => ( -->
+                                    <tr class="hover:bg-slate-50" data-mock="true">
+                                        <td class="px-6 py-4">
+                                            <div>
+                                                <div class="font-medium text-slate-900" data-bind="appointment.userName">María González</div>
+                                                <div class="text-sm text-slate-500" data-bind="appointment.userEmail">maria@ejemplo.com</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-bind="appointment.program" data-mock="true">Desarrollo Web</td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-bind="appointment.type" data-mock="true">Mentoría (60min)</td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-bind="appointment.date" data-mock="true">15 Dic, 2024 - 10:00</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800" data-bind="appointment.status" data-mock="true">
+                                                Pendiente
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <select class="text-sm border border-slate-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500" data-event="change:assignMentor">
+                                                <option data-mock="true">Asignar mentor...</option>
+                                                <option value="1" data-mock="true">Carlos Ruiz</option>
+                                                <option value="2" data-mock="true">Ana López</option>
+                                                <option value="3" data-mock="true">Pedro Martín</option>
+                                            </select>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex space-x-2">
+                                                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium" data-event="click:viewAppointment">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="text-green-600 hover:text-green-800 text-sm font-medium" data-event="click:editAppointment">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="text-red-600 hover:text-red-800 text-sm font-medium" data-event="click:deleteAppointment">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr class="hover:bg-slate-50" data-mock="true">
+                                        <td class="px-6 py-4">
+                                            <div>
+                                                <div class="font-medium text-slate-900" data-mock="true">Juan Pérez</div>
+                                                <div class="text-sm text-slate-500" data-mock="true">juan@ejemplo.com</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-mock="true">Data Science</td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-mock="true">Consulta (30min)</td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-mock="true">16 Dic, 2024 - 14:30</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800" data-mock="true">
+                                                Asignada
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
+                                                    <span class="text-xs text-white font-medium" data-mock="true">A</span>
+                                                </div>
+                                                <span class="text-sm text-slate-900" data-mock="true">Ana López</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex space-x-2">
+                                                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <button class="text-green-600 hover:text-green-800 text-sm font-medium">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="text-red-600 hover:text-red-800 text-sm font-medium">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <div class="px-6 py-4 border-t border-slate-200 flex items-center justify-between">
+                            <div class="text-sm text-slate-700">
+                                Mostrando <span class="font-medium">1</span> a <span class="font-medium">10</span> de <span class="font-medium">24</span> citas
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50">Anterior</button>
+                                <button class="px-3 py-1 bg-blue-600 text-white rounded text-sm">1</button>
+                                <button class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50">2</button>
+                                <button class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50">3</button>
+                                <button class="px-3 py-1 border border-slate-300 rounded text-sm hover:bg-slate-50">Siguiente</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: AppointmentsManagement -->
+
+                <!-- @COMPONENT: MentorsManagement [mentors tab content] -->
+                <div id="adminMentors" class="admin-tab-content hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900">Gestión de Mentores</h2>
+                            <p class="text-slate-600 mt-1">Administra el equipo de mentores y sus especialidades</p>
+                        </div>
+                        <button class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Añadir Mentor
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- @MAP: mentors.map(mentor => ( -->
+                        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6" data-mock="true">
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                    <span class="text-lg text-white font-medium" data-mock="true">CR</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-slate-900" data-bind="mentor.name" data-mock="true">Carlos Ruiz</h3>
+                                    <p class="text-sm text-slate-500" data-bind="mentor.specialty" data-mock="true">Desarrollo Full Stack</p>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-600">Citas asignadas:</span>
+                                    <span class="font-medium text-slate-900" data-bind="mentor.appointmentsCount" data-mock="true">8</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-slate-600">Disponibilidad:</span>
+                                    <span class="font-medium text-green-600" data-bind="mentor.availability" data-mock="true">Disponible</span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-blue-100 transition-colors">
+                                    Ver Agenda
+                                </button>
+                                <button class="flex-1 bg-slate-50 text-slate-600 px-3 py-2 rounded-lg text-sm font-medium hover:bg-slate-100 transition-colors">
+                                    Editar
+                                </button>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MentorsManagement -->
+
+            </main>
+        </div>
+        <!-- @END_COMPONENT: AdminInterface -->
+
+        <!-- @COMPONENT: MentorInterface [mentor dashboard] -->
+        <div id="mentorInterface" class="interface-view hidden">
+            <!-- Mentor Navigation -->
+            <nav class="bg-white shadow-sm border-b border-slate-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center h-16">
+                        <div class="flex items-center space-x-8">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-user-graduate text-white text-sm"></i>
+                                </div>
+                                <h1 class="text-xl font-semibold text-slate-900">Panel de Mentor</h1>
+                            </div>
+                            
+                            <div class="hidden md:flex space-x-6">
+                                <button onclick="showMentorTab('calendar')" class="mentor-tab-btn active text-indigo-600 font-medium">
+                                    <i class="fas fa-calendar mr-2"></i>Mi Calendario
+                                </button>
+                                <button onclick="showMentorTab('appointments')" class="mentor-tab-btn text-slate-600 hover:text-indigo-600 font-medium">
+                                    <i class="fas fa-list mr-2"></i>Mis Citas
+                                </button>
+                                <button onclick="showMentorTab('profile')" class="mentor-tab-btn text-slate-600 hover:text-indigo-600 font-medium">
+                                    <i class="fas fa-user mr-2"></i>Perfil
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <span class="text-sm text-slate-600" data-bind="currentMentor.name" data-mock="true">Carlos Ruiz</span>
+                            <button onclick="logout()" class="text-slate-600 hover:text-red-600 transition-colors">
+                                <i class="fas fa-sign-out-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Mentor Content Area -->
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                
+                <!-- @COMPONENT: MentorCalendar [calendar view] -->
+                <div id="mentorCalendar" class="mentor-tab-content">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900">Mi Calendario</h2>
+                            <p class="text-slate-600 mt-1">Gestiona tus citas y disponibilidad</p>
+                        </div>
+                        
+                        <div class="flex items-center space-x-4">
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-2 border border-slate-300 rounded-lg text-sm hover:bg-slate-50">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="px-4 py-2 text-sm font-medium text-slate-900" data-mock="true">Diciembre 2024</span>
+                                <button class="px-3 py-2 border border-slate-300 rounded-lg text-sm hover:bg-slate-50">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Bloquear Tiempo
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Grid -->
+                    <!-- @FUNCTIONALITY: This calendar should implement interactive scheduling with click/drag functionality -->
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="grid grid-cols-7 border-b border-slate-200">
+                            <div class="px-4 py-3 text-sm font-medium text-slate-900 text-center bg-slate-50">Dom</div>
+                            <div class="px-4 py-3 text-sm font-medium text-slate-900 text-center bg-slate-50">Lun</div>
+                            <div class="px-4 py-3 text-sm font-medium text-slate-900 text-center bg-slate-50">Mar</div>
+                            <div class="px-4 py-3 text-sm font-medium text-slate-900 text-center bg-slate-50">Mié</div>
+                            <div class="px-4 py-3 text-sm font-medium text-slate-900 text-center bg-slate-50">Jue</div>
+                            <div class="px-4 py-3 text-sm font-medium text-slate-900 text-center bg-slate-50">Vie</div>
+                            <div class="px-4 py-3 text-sm font-medium text-slate-900 text-center bg-slate-50">Sáb</div>
+                        </div>
+                        
+                        <div class="grid grid-cols-7">
+                            <!-- Calendar days with appointments -->
+                            <!-- @MAP: calendarDays.map(day => ( -->
+                            <div class="border-r border-b border-slate-200 h-32 p-2 hover:bg-slate-50 cursor-pointer" data-mock="true">
+                                <div class="text-sm text-slate-600 mb-1" data-bind="day.number" data-mock="true">15</div>
+                                <div class="space-y-1">
+                                    <div class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded truncate" data-mock="true">
+                                        10:00 - María G.
+                                    </div>
+                                    <div class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded truncate" data-mock="true">
+                                        14:30 - Juan P.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-r border-b border-slate-200 h-32 p-2 hover:bg-slate-50 cursor-pointer" data-mock="true">
+                                <div class="text-sm text-slate-600 mb-1" data-mock="true">16</div>
+                                <div class="space-y-1">
+                                    <div class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded truncate" data-mock="true">
+                                        09:00 - Ana L.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-r border-b border-slate-200 h-32 p-2 hover:bg-slate-50 cursor-pointer" data-mock="true">
+                                <div class="text-sm text-slate-600 mb-1" data-mock="true">17</div>
+                            </div>
+                            
+                            <div class="border-r border-b border-slate-200 h-32 p-2 hover:bg-slate-50 cursor-pointer" data-mock="true">
+                                <div class="text-sm text-slate-600 mb-1" data-mock="true">18</div>
+                                <div class="space-y-1">
+                                    <div class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded truncate" data-mock="true">
+                                        11:00 - Pedro M.
+                                    </div>
+                                    <div class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded truncate" data-mock="true">
+                                        16:00 - Laura S.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-r border-b border-slate-200 h-32 p-2 hover:bg-slate-50 cursor-pointer" data-mock="true">
+                                <div class="text-sm text-slate-600 mb-1" data-mock="true">19</div>
+                            </div>
+                            
+                            <div class="border-r border-b border-slate-200 h-32 p-2 hover:bg-slate-50 cursor-pointer" data-mock="true">
+                                <div class="text-sm text-slate-600 mb-1" data-mock="true">20</div>
+                                <div class="space-y-1">
+                                    <div class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded truncate" data-mock="true">
+                                        BLOQUEADO
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="border-r border-b border-slate-200 h-32 p-2 hover:bg-slate-50 cursor-pointer" data-mock="true">
+                                <div class="text-sm text-slate-600 mb-1" data-mock="true">21</div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+
+                    <!-- Today's Schedule -->
+                    <div class="mt-8 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h3 class="text-lg font-semibold text-slate-900 mb-4">Agenda de Hoy</h3>
+                        <div class="space-y-4">
+                            <!-- @MAP: todayAppointments.map(appointment => ( -->
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg" data-mock="true">
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-sm font-medium text-slate-900" data-bind="appointment.time" data-mock="true">10:00 - 11:00</div>
+                                    <div>
+                                        <div class="font-medium text-slate-900" data-bind="appointment.clientName" data-mock="true">María González</div>
+                                        <div class="text-sm text-slate-500" data-bind="appointment.type" data-mock="true">Sesión de Mentoría - Desarrollo Web</div>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                                        <i class="fas fa-video mr-1"></i>Unirse
+                                    </button>
+                                    <button class="text-slate-600 hover:text-slate-800">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MentorCalendar -->
+
+                <!-- @COMPONENT: MentorAppointments [appointments list view] -->
+                <div id="mentorAppointments" class="mentor-tab-content hidden">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 class="text-2xl font-bold text-slate-900">Mis Citas</h2>
+                            <p class="text-slate-600 mt-1">Historial y gestión de todas tus sesiones</p>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <select class="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500">
+                                <option data-mock="true">Esta semana</option>
+                                <option data-mock="true">Este mes</option>
+                                <option data-mock="true">Próximas</option>
+                                <option data-mock="true">Completadas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50 border-b border-slate-200">
+                                    <tr>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Cliente</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Programa</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Fecha</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Duración</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Estado</th>
+                                        <th class="text-left px-6 py-3 text-sm font-medium text-slate-900">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    <!-- @MAP: mentorAppointments.map(appointment => ( -->
+                                    <tr class="hover:bg-slate-50" data-mock="true">
+                                        <td class="px-6 py-4">
+                                            <div>
+                                                <div class="font-medium text-slate-900" data-bind="appointment.clientName" data-mock="true">María González</div>
+                                                <div class="text-sm text-slate-500" data-bind="appointment.clientEmail" data-mock="true">maria@ejemplo.com</div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-bind="appointment.program" data-mock="true">Desarrollo Web Full Stack</td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-bind="appointment.date" data-mock="true">15 Dic, 2024 - 10:00</td>
+                                        <td class="px-6 py-4 text-sm text-slate-900" data-bind="appointment.duration" data-mock="true">60 minutos</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800" data-bind="appointment.status" data-mock="true">
+                                                Programada
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex space-x-2">
+                                                <button class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm font-medium transition-colors">
+                                                    <i class="fas fa-video mr-1"></i>Unirse
+                                                </button>
+                                                <button class="text-slate-600 hover:text-slate-800">
+                                                    <i class="fas fa-comment"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: MentorAppointments -->
+
+            </main>
+        </div>
+        <!-- @END_COMPONENT: MentorInterface -->
+
+        <!-- @COMPONENT: LoginModal [authentication modal] -->
+        <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-2xl font-semibold text-white">Iniciar Sesión</h2>
+                        <button onclick="hideLoginModal()" class="text-white hover:text-gray-200">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <form id="loginForm" class="p-8 space-y-6">
+                    <!-- @STATE: loginData:object = {} -->
+                    <!-- @STATE: userRole:string = '' -->
+                    
+                    <div class="space-y-2">
+                        <label for="loginEmail" class="block text-sm font-medium text-slate-700">Correo Electrónico</label>
+                        <input 
+                            type="email" 
+                            id="loginEmail" 
+                            name="email"
+                            data-bind="loginData.email"
+                            data-mock="true"
+                            placeholder="admin@mentorconnect.com"
+                            required
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="loginPassword" class="block text-sm font-medium text-slate-700">Contraseña</label>
+                        <input 
+                            type="password" 
+                            id="loginPassword" 
+                            name="password"
+                            data-bind="loginData.password"
+                            data-mock="true"
+                            placeholder="••••••••"
+                            required
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        />
+                    </div>
+
+                    <div class="space-y-2">
+                        <label for="userRole" class="block text-sm font-medium text-slate-700">Rol</label>
+                        <select 
+                            id="userRole" 
+                            name="role"
+                            data-bind="loginData.role"
+                            required
+                            class="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        >
+                            <option value="" data-mock="true">Selecciona tu rol</option>
+                            <option value="admin" data-mock="true">Administrador</option>
+                            <option value="mentor" data-mock="true">Mentor</option>
+                        </select>
+                    </div>
+
+                    <button 
+                        type="submit"
+                        data-event="click:handleLogin"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Iniciar Sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: LoginModal -->
+
+    </div>
+    <!-- @END_COMPONENT: AppContainer -->
+
+    <script>
+        (function() {
+            // Application state management
+            let currentInterface = 'publicBooking';
+            let currentUser = null;
+            let formData = {};
+            let formErrors = {};
+
+            // Interface switching functions
+            window.showInterface = function(interfaceName) {
+                // Hide all interfaces
+                document.querySelectorAll('.interface-view').forEach(view => {
+                    view.classList.add('hidden');
+                });
+                
+                // Show selected interface
+                document.getElementById(interfaceName).classList.remove('hidden');
+                currentInterface = interfaceName;
+            };
+
+            // Login modal functions
+            window.showLoginModal = function() {
+                document.getElementById('loginModal').classList.remove('hidden');
+            };
+
+            window.hideLoginModal = function() {
+                document.getElementById('loginModal').classList.add('hidden');
+            };
+
+            // Authentication handling
+            window.handleLogin = function(event) {
+                event.preventDefault();
+                
+                const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const role = document.getElementById('userRole').value;
+
+                // Simulate authentication
+                if (email && password && role) {
+                    currentUser = { email, role, name: role === 'admin' ? 'Admin User' : 'Carlos Ruiz' };
+                    hideLoginModal();
+                    
+                    if (role === 'admin') {
+                        showInterface('adminInterface');
+                    } else if (role === 'mentor') {
+                        showInterface('mentorInterface');
+                    }
+                }
+            };
+
+            window.logout = function() {
+                currentUser = null;
+                showInterface('publicBooking');
+            };
+
+            // Admin tab switching
+            window.showAdminTab = function(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.admin-tab-btn').forEach(btn => {
+                    btn.classList.remove('active', 'text-blue-600');
+                    btn.classList.add('text-slate-600');
+                });
+                event.target.classList.add('active', 'text-blue-600');
+                event.target.classList.remove('text-slate-600');
+
+                // Show/hide tab content
+                document.querySelectorAll('.admin-tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById('admin' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.remove('hidden');
+            };
+
+            // Mentor tab switching
+            window.showMentorTab = function(tabName) {
+                // Update tab buttons
+                document.querySelectorAll('.mentor-tab-btn').forEach(btn => {
+                    btn.classList.remove('active', 'text-indigo-600');
+                    btn.classList.add('text-slate-600');
+                });
+                event.target.classList.add('active', 'text-indigo-600');
+                event.target.classList.remove('text-slate-600');
+
+                // Show/hide tab content
+                document.querySelectorAll('.mentor-tab-content').forEach(content => {
+                    content.classList.add('hidden');
+                });
+                document.getElementById('mentor' + tabName.charAt(0).toUpperCase() + tabName.slice(1)).classList.remove('hidden');
+            };
+
+            // Form validation functions
+            function validateField(fieldName, value) {
+                const errors = [];
+                
+                switch(fieldName) {
+                    case 'userName':
+                        if (!value.trim()) errors.push('El nombre del usuario no puede estar vacío.');
+                        if (value.length > 50) errors.push('El nombre del usuario no puede superar los 50 caracteres.');
+                        break;
+                    case 'userEmail':
+                        if (!value.trim()) errors.push('El correo electrónico del usuario no puede estar vacío.');
+                        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) errors.push('El correo electrónico debe tener un formato válido.');
+                        break;
+                    case 'phone':
+                        if (!value.trim()) errors.push('El número de teléfono del usuario no puede estar vacío.');
+                        if (value.length < 10 || value.length > 15) errors.push('El teléfono debe tener entre 10 y 15 caracteres.');
+                        break;
+                    case 'numberDocument':
+                        if (!value.trim()) errors.push('El número de documento no puede estar vacío.');
+                        break;
+                    case 'date':
+                        if (!value) errors.push('La fecha de la cita no puede ser nula.');
+                        break;
+                    case 'typeOfAppointmentId':
+                        if (!value) errors.push('El tipo de cita no puede ser nulo.');
+                        break;
+                    case 'details':
+                        if (value.length > 200) errors.push('Los detalles no pueden superar los 200 caracteres.');
+                        break;
+                }
+                
+                return errors;
+            }
+
+            function showFieldError(fieldName, errors) {
+                const errorElement = document.getElementById(fieldName + '-error');
+                const inputElement = document.getElementById(fieldName);
+                
+                if (errors.length > 0) {
+                    errorElement.textContent = errors[0];
+                    errorElement.classList.remove('hidden');
+                    inputElement.classList.add('border-red-500', 'focus:ring-red-500');
+                    inputElement.classList.remove('border-slate-300', 'focus:ring-blue-500');
+                } else {
+                    errorElement.classList.add('hidden');
+                    inputElement.classList.remove('border-red-500', 'focus:ring-red-500');
+                    inputElement.classList.add('border-slate-300', 'focus:ring-blue-500');
+                }
+            }
+
+            // Real-time validation
+            function setupFieldValidation() {
+                const fields = ['userName', 'userEmail', 'phone', 'numberDocument', 'date', 'typeOfAppointmentId', 'details'];
+                
+                fields.forEach(fieldName => {
+                    const element = document.getElementById(fieldName);
+                    if (element) {
+                        element.addEventListener('blur', function() {
+                            const errors = validateField(fieldName, this.value);
+                            showFieldError(fieldName, errors);
+                            formErrors[fieldName] = errors;
+                        });
+                        
+                        element.addEventListener('input', function() {
+                            formData[fieldName] = this.value;
+                            
+                            // Update character counter for details
+                            if (fieldName === 'details') {
+                                document.getElementById('details-counter').textContent = `${this.value.length}/200 caracteres`;
+                            }
+                        });
+                    }
+                });
+            }
+
+            // Appointment form submission
+            window.handleAppointmentSubmit = function(event) {
+                event.preventDefault();
+                
+                // Validate all fields
+                const formElement = document.getElementById('appointmentForm');
+                const formData = new FormData(formElement);
+                let hasErrors = false;
+                
+                for (let [fieldName, value] of formData.entries()) {
+                    const errors = validateField(fieldName, value);
+                    showFieldError(fieldName, errors);
+                    if (errors.length > 0) hasErrors = true;
+                }
+                
+                if (!hasErrors) {
+                    // Simulate successful submission
+                    alert('¡Cita agendada exitosamente! Recibirás un correo de confirmación pronto.');
+                    formElement.reset();
+                    document.getElementById('details-counter').textContent = '0/200 caracteres';
+                }
+            };
+
+            // Initialize application
+            document.addEventListener('DOMContentLoaded', function() {
+                setupFieldValidation();
+                
+                // Setup login form submission
+                document.getElementById('loginForm').addEventListener('submit', handleLogin);
+                
+                // Setup appointment form submission
+                document.getElementById('appointmentForm').addEventListener('submit', handleAppointmentSubmit);
+                
+                // Set minimum date to today for appointment booking
+                const dateInput = document.getElementById('date');
+                if (dateInput) {
+                    const now = new Date();
+                    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+                    dateInput.min = now.toISOString().slice(0, 16);
+                }
+            });
+
+            // Mentor assignment function
+            window.assignMentor = function(appointmentId, mentorId) {
+                // Simulate mentor assignment
+                console.log(`Assigning mentor ${mentorId} to appointment ${appointmentId}`);
+                // This would typically make an API call
+            };
+
+            // Mock functions for button interactions
+            window.viewAppointment = function(id) {
+                alert('Ver detalles de la cita');
+            };
+
+            window.editAppointment = function(id) {
+                alert('Editar cita');
+            };
+
+            window.deleteAppointment = function(id) {
+                if (confirm('¿Estás seguro de que deseas eliminar esta cita?')) {
+                    alert('Cita eliminada');
+                }
+            };
+
+        })();
+    </script>
+</body>
+</html>
