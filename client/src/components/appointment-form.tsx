@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,9 +10,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarPlus } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { CalendarPlus, CheckCircle } from "lucide-react";
+import { api } from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { useAppointmentData } from "@/hooks/use-appointment-data";
+import AppointmentConfirmation from "@/components/AppointmentConfirmation";
 
 const appointmentSchema = z.object({
   userName: z.string()
@@ -20,7 +23,8 @@ const appointmentSchema = z.object({
     .max(50, "El nombre del usuario no puede superar los 50 caracteres."),
   userEmail: z.string()
     .min(1, "El correo electrónico del usuario no puede estar vacío.")
-    .email("El correo electrónico debe tener un formato válido."),
+    .email("El correo electrónico debe tener un formato válido.")
+    .endsWith("@asturias.edu.co", { message: "El correo electrónico debe ser del dominio @asturias.edu.co" }),
   phone: z.string()
     .min(10, "El teléfono debe tener entre 10 y 15 caracteres.")
     .max(15, "El teléfono debe tener entre 10 y 15 caracteres."),
@@ -42,10 +46,20 @@ const appointmentSchema = z.object({
 
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
+// Define the type for the success response data
+interface CreateAppointmentSuccessResponse {
+  date: string;
+  nameStudent: string;
+  userEmail: string;
+}
+
 export function AppointmentForm() {
   const [characterCount, setCharacterCount] = useState(0);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successAppointmentData, setSuccessAppointmentData] = useState<CreateAppointmentSuccessResponse | null>(null); // State to store success data
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { programs, appointmentTypes, isLoading } = useAppointmentData();
 
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
@@ -62,29 +76,11 @@ export function AppointmentForm() {
     }
   });
 
-  const { data: programs = [] } = useQuery({
-    queryKey: ["/api/programs"]
-  });
-
-  const { data: appointmentTypes = [] } = useQuery({
-    queryKey: ["/api/appointment-types"]
-  });
-
   const createAppointmentMutation = useMutation({
-    mutationFn: async (data: AppointmentFormData) => {
-      const response = await apiRequest("POST", "/api/appointments", {
-        ...data,
-        programId: parseInt(data.programId),
-        typeOfAppointmentId: parseInt(data.typeOfAppointmentId),
-        date: new Date(data.date).toISOString()
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "¡Cita agendada exitosamente!",
-        description: "Recibirás un correo de confirmación pronto.",
-      });
+    mutationFn: api.appointments.create,
+    onSuccess: (data: CreateAppointmentSuccessResponse) => {
+      setSuccessAppointmentData(data);
+      setShowSuccessModal(true);
       form.reset();
       setCharacterCount(0);
     },
@@ -111,12 +107,30 @@ export function AppointmentForm() {
   today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
   const minDateTime = today.toISOString().slice(0, 16);
 
+  if (isLoading) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto shadow-xl border border-slate-200">
+        <CardHeader className="text-white" style={{ backgroundColor: '#FACC15' }}>
+          <CardTitle className="text-2xl font-semibold">Cargando...</CardTitle>
+        </CardHeader>
+        <CardContent className="p-8">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-500"></div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  console.log("Current programs:", programs);
+  console.log("Current appointment types:", appointmentTypes);
+
   return (
     <Card className="w-full max-w-4xl mx-auto shadow-xl border border-slate-200">
-<CardHeader className="text-white" style={{ backgroundColor: '#FACC15' }}>
-  <CardTitle className="text-2xl font-semibold">Agendar Cita</CardTitle>
-  <p className="text-yellow-100 mt-2">Completa todos los campos para agendar tu sesión</p>
-</CardHeader>
+      <CardHeader className="text-white" style={{ backgroundColor: '#FACC15' }}>
+        <CardTitle className="text-2xl font-semibold">Agendar Cita</CardTitle>
+        <p className="text-yellow-100 mt-2">Completa todos los campos para agendar tu sesión</p>
+      </CardHeader>
 
       <CardContent className="p-8">
         <Form {...form}>
@@ -188,18 +202,24 @@ export function AppointmentForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Programa <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona un programa" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {programs.map((program: any) => (
-                          <SelectItem key={program.id} value={program.id.toString()}>
-                            {program.name}
+                        {programs && programs.length > 0 ? (
+                          programs.map((program) => (
+                            <SelectItem key={program.id} value={program.id.toString()}>
+                              {program.name}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-programs" disabled>
+                            No hay programas disponibles
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -213,16 +233,16 @@ export function AppointmentForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Tipo de Cita <span className="text-red-500">*</span></FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona el tipo de cita" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {appointmentTypes.map((type: any) => (
+                        {appointmentTypes.map((type) => (
                           <SelectItem key={type.id} value={type.id.toString()}>
-                            {type.name} ({type.duration} min)
+                            {type.name}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -295,16 +315,40 @@ export function AppointmentForm() {
             <div className="pt-6">
               <Button
                 type="submit"
-                className="w-full bg-yellow-600 hover:bg-yellow-700"
+                className="w-full text-white bg-[#FACC15] hover:bg-[#E6B812] disabled:opacity-50"
                 disabled={createAppointmentMutation.isPending}
               >
                 <CalendarPlus className="mr-2 h-4 w-4" />
                 {createAppointmentMutation.isPending ? "Agendando..." : "Agendar Cita"}
               </Button>
-            </div>
+            </div>  
           </form>
         </Form>
       </CardContent>
+
+      
+      {/* Success Modal */}
+      {successAppointmentData && showSuccessModal && (
+        <AppointmentConfirmation 
+          appointment={{
+            id: "",
+            type: "",
+            datetime: successAppointmentData.date,
+            doctor: {
+              name: successAppointmentData.nameStudent,
+              specialty: "",
+            },
+            location: {
+              name: "",
+              address: "",
+            },
+            userEmail: successAppointmentData.userEmail,
+          }}
+          onClose={() => setShowSuccessModal(false)}
+          onAddToCalendar={() => { console.log("Add to calendar button clicked!"); }}
+        />
+      )}
+
     </Card>
   );
 }
