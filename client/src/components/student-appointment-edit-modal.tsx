@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar, Clock, AlertCircle } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDateTime } from "@/lib/utils";
+import { type Appointment } from "@/lib/constants";
 
 const editAppointmentSchema = z.object({
   date: z.string().min(1, "La fecha es requerida"),
@@ -21,19 +22,7 @@ const editAppointmentSchema = z.object({
 type EditAppointmentFormData = z.infer<typeof editAppointmentSchema>;
 
 interface StudentAppointmentEditModalProps {
-  appointment: {
-    id: number;
-    userName: string;
-    userEmail: string;
-    phone: string;
-    numberDocument: string;
-    date: string;
-    details?: string;
-    status: string;
-    program?: string;
-    type?: string;
-    mentor?: string;
-  };
+  appointment: Appointment;
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -41,10 +30,10 @@ interface StudentAppointmentEditModalProps {
   userDocument: string;
 }
 
-export function StudentAppointmentEditModal({ 
-  appointment, 
-  isOpen, 
-  onClose, 
+export function StudentAppointmentEditModal({
+  appointment,
+  isOpen,
+  onClose,
   onSave,
   userEmail,
   userDocument

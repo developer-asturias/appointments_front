@@ -1,41 +1,17 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Search, Calendar, Clock, User, FileText, AlertCircle, CheckCircle, Edit, X } from "lucide-react";
-import { formatDateTime, getStatusColor, getStatusText } from "@/lib/utils";
+import { Search, Calendar, Clock, FileText, AlertCircle, CheckCircle, Edit, X } from "lucide-react";
+import { formatDateTime } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { StudentAppointmentEditModal } from "@/components/student-appointment-edit-modal";
 import { useToast } from "@/hooks/use-toast";
-
-const searchSchema = z.object({
-  email: z.string().email("Correo electrónico inválido"),
-  numberDocument: z.string().min(1, "Número de documento es requerido")
-});
-
-type SearchFormData = z.infer<typeof searchSchema>;
-
-interface Appointment {
-  id: number;
-  userName: string;
-  userEmail: string;
-  phone: string;
-  numberDocument: string;
-  date: string;
-  details?: string;
-  status: string;
-  program?: string;
-  type?: string;
-  mentor?: string;
-}
+import { AppointmentSearchForm } from "./appointment-search-form";
+import { type Appointment, type SearchFormData, type ApiError, STATUS_COLORS, STATUS_TEXTS } from "@/lib/constants";
 
 export function AppointmentSearch() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -45,27 +21,36 @@ export function AppointmentSearch() {
   const [searchCredentials, setSearchCredentials] = useState<{ email: string; numberDocument: string } | null>(null);
   const { toast } = useToast();
 
-  const form = useForm<SearchFormData>({
-    resolver: zodResolver(searchSchema),
-    defaultValues: {
-      email: "",
-      numberDocument: ""
-    }
-  });
-
   const searchMutation = useMutation({
     mutationFn: async (data: SearchFormData) => {
-      const response = await apiRequest("POST", "/api/appointments/search", data);
+      const params = new URLSearchParams({
+        email: data.email,
+        documentNumber: data.numberDocument
+      });
+      
+      const response = await apiRequest(
+        "GET", 
+        `/api/students/search-appointments?${params.toString()}`
+      );
+      
+      if (!response.ok) {
+        throw new Error("Error al buscar citas");
+      }
+      
       return response.json();
     },
     onSuccess: (data) => {
       setAppointments(data);
       setHasSearched(true);
       setError(null);
-      setSearchCredentials({ email: form.getValues().email, numberDocument: form.getValues().numberDocument });
+      setSearchCredentials({ 
+        email: searchMutation.variables?.email || "", 
+        numberDocument: searchMutation.variables?.numberDocument || "" 
+      });
     },
-    onError: (error: any) => {
-      setError("Error al buscar citas. Por favor, verifica tus datos.");
+    onError: (error: ApiError) => {
+      const errorMessage = error.message || "Error al buscar citas. Por favor, verifica tus datos.";
+      setError(errorMessage);
       setAppointments([]);
       setHasSearched(true);
     },
@@ -84,15 +69,14 @@ export function AppointmentSearch() {
         title: "Cita cancelada",
         description: "Tu cita ha sido cancelada exitosamente.",
       });
-      // Refresh the search results
       if (searchCredentials) {
         searchMutation.mutate(searchCredentials);
       }
     },
-    onError: (error: any) => {
+    onError: (error: ApiError) => {
       toast({
         title: "Error",
-        description: "No se pudo cancelar la cita. Por favor, intenta nuevamente.",
+        description: error.message || "No se pudo cancelar la cita. Por favor, intenta nuevamente.",
         variant: "destructive",
       });
     },
@@ -115,7 +99,6 @@ export function AppointmentSearch() {
       title: "Cita actualizada",
       description: "Tu cita ha sido actualizada exitosamente.",
     });
-    // Refresh the search results
     if (searchCredentials) {
       searchMutation.mutate(searchCredentials);
     }
@@ -146,55 +129,10 @@ export function AppointmentSearch() {
               </Alert>
             )}
 
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Correo Electrónico</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email" 
-                            placeholder="tucorreo@ejemplo.com" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="numberDocument"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Número de Documento</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="12345678" 
-                            {...field} 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  disabled={searchMutation.isPending}
-                >
-                  <Search className="mr-2 h-4 w-4" />
-                  {searchMutation.isPending ? "Buscando..." : "Buscar Citas"}
-                </Button>
-              </form>
-            </Form>
+            <AppointmentSearchForm 
+              onSubmit={onSubmit}
+              isPending={searchMutation.isPending}
+            />
           </CardContent>
         </Card>
 
@@ -218,7 +156,7 @@ export function AppointmentSearch() {
                 </div>
 
                 {appointments.map((appointment) => (
-                  <Card key={appointment.id} className="hover:shadow-md transition-shadow">
+                  <Card key={appointment.idAppointment} className="hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                         <div className="flex-1 space-y-3">
@@ -227,26 +165,16 @@ export function AppointmentSearch() {
                             <span className="font-medium text-slate-900">
                               {formatDateTime(appointment.date)}
                             </span>
-                            <Badge className={getStatusColor(appointment.status)}>
-                              {getStatusText(appointment.status)}
+                            <Badge className={STATUS_COLORS[appointment.status]}>
+                              {STATUS_TEXTS[appointment.status]}
                             </Badge>
                           </div>
 
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-slate-600">
                             <div className="flex items-center gap-2">
                               <FileText className="h-4 w-4" />
-                              <span>Programa: {appointment.program}</span>
+                              <span>Tipo: {appointment.typeOfAppointmentName}</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
-                              <span>Tipo: {appointment.type}</span>
-                            </div>
-                            {appointment.mentor && (
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4" />
-                                <span>Mentor: {appointment.mentor}</span>
-                              </div>
-                            )}
                           </div>
 
                           {appointment.details && (
@@ -258,7 +186,7 @@ export function AppointmentSearch() {
                           )}
                         </div>
 
-                        {appointment.status === "pending" && (
+                        {appointment.status === "PENDING" && (
                           <div className="flex flex-col gap-2 md:ml-4">
                             <Button
                               size="sm"
@@ -292,7 +220,7 @@ export function AppointmentSearch() {
                                 <AlertDialogFooter>
                                   <AlertDialogCancel>No cancelar</AlertDialogCancel>
                                   <AlertDialogAction
-                                    onClick={() => handleCancelAppointment(appointment.id)}
+                                    onClick={() => handleCancelAppointment(appointment.idAppointment)}
                                     className="bg-red-600 hover:bg-red-700"
                                   >
                                     Sí, cancelar
