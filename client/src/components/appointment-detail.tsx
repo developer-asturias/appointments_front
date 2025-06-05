@@ -12,7 +12,7 @@ import { AppointmentEditModal } from "./appointment-edit-modal";
 
 interface AppointmentDetailProps {
   appointment: {
-    id: number;
+    appointmentId: number;
     userName: string;
     userEmail: string;
     phone: string;
@@ -42,8 +42,8 @@ export function AppointmentDetail({ appointment, mentors, onClose, userRole = "a
   const queryClient = useQueryClient();
 
   const deleteAppointmentMutation = useMutation({
-    mutationFn: async (id: number) => {
-      const response = await apiRequest("DELETE", `/api/admin/appointments/${id}`);
+    mutationFn: async (appointmentId: number) => {
+      const response = await apiRequest("DELETE", `/api/admin/appointments/${appointmentId}`);
       return response.json();
     },
     onSuccess: () => {
@@ -65,7 +65,7 @@ export function AppointmentDetail({ appointment, mentors, onClose, userRole = "a
 
   const handleDelete = () => {
     if (window.confirm("¿Estás seguro de que deseas eliminar esta cita?")) {
-      deleteAppointmentMutation.mutate(appointment.id);
+      deleteAppointmentMutation.mutate(appointment.appointmentId);
     }
   };
 
@@ -79,7 +79,7 @@ export function AppointmentDetail({ appointment, mentors, onClose, userRole = "a
               <Badge className={getStatusColor(appointment.status)}>
                 {getStatusText(appointment.status)}
               </Badge>
-              <span className="text-sm text-gray-500">ID: {appointment.id}</span>
+              <span className="text-sm text-gray-500">ID: {appointment.appointmentId}</span>
             </div>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>

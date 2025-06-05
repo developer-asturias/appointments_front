@@ -11,14 +11,105 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { AppointmentDetail } from "./appointment-detail";
 
+interface User {
+  id: number;
+  name: string;
+  email: string;
+}
+
+interface Appointment {
+  appointmentId: number;
+  userName: string;
+  userEmail: string;
+  phone: string;
+  numberDocument: string;
+  date: string;
+  details?: string;
+  status: string;
+  program?: string;
+  type?: string;
+  mentor?: string;
+  mentorName?: string | null;
+  mentorId?: number;
+  programId: number;
+  typeOfAppointmentId: number;
+}
+
+interface AppointmentsResponse {
+  content: Appointment[];
+  pageable: {
+    pageNumber: number;
+    pageSize: number;
+    sort: {
+      empty: boolean;
+      unsorted: boolean;
+      sorted: boolean;
+    };
+    offset: number;
+    paged: boolean;
+    unpaged: boolean;
+  };
+  last: boolean;
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  sort: {
+    empty: boolean;
+    unsorted: boolean;
+    sorted: boolean;
+  };
+  numberOfElements: number;
+  first: boolean;
+  empty: boolean;
+}
+
 export function AppointmentTable() {
   const [statusFilter, setStatusFilter] = useState("all");
-  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [selectedAdvisor, setSelectedAdvisor] = useState<string>("all");
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: appointments = [], isLoading } = useQuery({
-    queryKey: ["/api/admin/appointments"]
+  const { data: users = [] } = useQuery<User[]>({
+    queryKey: ["/api/users/get-all"],
+    queryFn: async () => {
+      const response = await fetch("http://localhost:8080/api/users/get-all");
+      if (!response.ok) {
+        throw new Error("Error al cargar los usuarios");
+      }
+      return response.json();
+    }
+  });
+
+  const { data: appointmentsData, isLoading } = useQuery<AppointmentsResponse>({
+    queryKey: ["/api/appointments/get-all"],
+    queryFn: async () => {
+      const response = await fetch("http://localhost:8080/api/appointments/get-all");
+      if (!response.ok) {
+        throw new Error("Error al cargar las citas");
+      }
+      const data = await response.json();
+      return {
+        ...data,
+        content: data.content.map((appointment: any) => ({
+          appointmentId: appointment.appointmentId,
+          userName: appointment.userName,
+          userEmail: appointment.email,
+          phone: appointment.phone || "",
+          numberDocument: appointment.numberDocument || "",
+          date: appointment.date,
+          details: appointment.details,
+          status: appointment.status,
+          program: appointment.program,
+          type: appointment.typeOfAppointmentName,
+          mentorName: appointment.mentorName,
+          mentorId: appointment.mentorId,
+          programId: appointment.programId,
+          typeOfAppointmentId: appointment.typeOfAppointmentId
+        }))
+      };
+    }
   });
 
   const { data: mentors = [] } = useQuery({
@@ -27,20 +118,34 @@ export function AppointmentTable() {
 
   const assignMentorMutation = useMutation({
     mutationFn: async ({ appointmentId, mentorId }: { appointmentId: number; mentorId: number }) => {
-      const response = await apiRequest("PATCH", `/api/admin/appointments/${appointmentId}/assign`, { mentorId });
+      if (typeof appointmentId !== 'number') {
+        throw new Error('Appointment ID is missing or invalid.');
+      }
+      const response = await fetch(`http://localhost:8080/api/appointments/${appointmentId}/mentor/${mentorId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const error = await response.text();
+        throw new Error(error || 'Error al asignar el mentor');
+      }
+      
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments/get-all"] });
       toast({
         title: "Mentor asignado",
         description: "El mentor ha sido asignado exitosamente a la cita.",
       });
     },
-    onError: () => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "No se pudo asignar el mentor. Inténtalo de nuevo.",
+        description: error.message || "No se pudo asignar el mentor. Inténtalo de nuevo.",
         variant: "destructive",
       });
     }
@@ -66,13 +171,16 @@ export function AppointmentTable() {
     }
   });
 
-  const filteredAppointments = appointments.filter((appointment: any) => {
-    if (statusFilter === "all") return true;
-    return appointment.status === statusFilter;
-  });
+  const filteredAppointments = appointmentsData?.content.filter((appointment) => {
+    if (statusFilter === "all" && selectedAdvisor === "all") return true;
+    if (statusFilter !== "all" && selectedAdvisor === "all") return appointment.status === statusFilter;
+    if (statusFilter === "all" && selectedAdvisor !== "all") return appointment.mentorId === parseInt(selectedAdvisor);
+    return appointment.status === statusFilter && appointment.mentorId === parseInt(selectedAdvisor);
+  }) || [];
 
   const handleAssignMentor = (appointmentId: number, mentorId: string) => {
-    if (mentorId) {
+    console.log("Assigning mentor - Appointment ID:", appointmentId, "Mentor ID:", mentorId);
+    if (mentorId && mentorId !== "unassigned") {
       assignMentorMutation.mutate({ appointmentId, mentorId: parseInt(mentorId) });
     }
   };
@@ -102,19 +210,30 @@ export function AppointmentTable() {
         <div className="flex space-x-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48">
-              <SelectValue />
+              <SelectValue placeholder="Filtrar por estado" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todas las citas</SelectItem>
-              <SelectItem value="pending">Pendientes</SelectItem>
-              <SelectItem value="assigned">Asignadas</SelectItem>
-              <SelectItem value="completed">Completadas</SelectItem>
+              <SelectItem value="PENDING">Pendientes</SelectItem>
+              <SelectItem value="ASSIGNED">Asignadas</SelectItem>
+              <SelectItem value="COMPLETED">Completadas</SelectItem>
+              <SelectItem value="CANCELLED">Canceladas</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline">
-            <Filter className="mr-2 h-4 w-4" />
-            Filtrar
-          </Button>
+
+          <Select value={selectedAdvisor} onValueChange={setSelectedAdvisor}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Filtrar por asesor" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los asesores</SelectItem>
+              {users.map((user) => (
+                <SelectItem key={user.id} value={user.id.toString()}>
+                  {user.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -143,8 +262,8 @@ export function AppointmentTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAppointments.map((appointment: any) => (
-                  <TableRow key={appointment.id}>
+                filteredAppointments.map((appointment, index) => (
+                  <TableRow key={`${appointment.userName}-${index}`}>
                     <TableCell>
                       <div>
                         <div className="font-medium text-slate-900">{appointment.userName}</div>
@@ -160,27 +279,28 @@ export function AppointmentTable() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {appointment.mentor ? (
+                      {appointment.mentorName && appointment.mentorName !== null ? (
                         <div className="flex items-center space-x-2">
                           <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
                             <span className="text-xs text-white font-medium">
-                              {appointment.mentor.charAt(0).toUpperCase()}
+                              {appointment.mentorName.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <span className="text-sm text-slate-900">{appointment.mentor}</span>
+                          <span className="text-sm text-slate-900">{appointment.mentorName}</span>
                         </div>
                       ) : (
                         <Select 
-                          onValueChange={(value) => handleAssignMentor(appointment.id, value)}
-                          disabled={assignMentorMutation.isPending}
+                          value="unassigned"
+                          onValueChange={(value) => handleAssignMentor(appointment.appointmentId, value)}
                         >
-                          <SelectTrigger className="w-40">
-                            <SelectValue placeholder="Asignar mentor..." />
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="Seleccionar mentor" />
                           </SelectTrigger>
                           <SelectContent>
-                            {mentors.map((mentor: any) => (
-                              <SelectItem key={mentor.id} value={mentor.id.toString()}>
-                                {mentor.name}
+                            <SelectItem value="unassigned">Sin asignar</SelectItem>
+                            {users.map((user) => (
+                              <SelectItem key={user.id} value={user.id.toString()}>
+                                {user.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -197,14 +317,6 @@ export function AppointmentTable() {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => handleDeleteAppointment(appointment.id)}
-                          disabled={deleteAppointmentMutation.isPending}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -218,23 +330,22 @@ export function AppointmentTable() {
               <div className="text-sm text-slate-700">
                 Mostrando <span className="font-medium">1</span> a{" "}
                 <span className="font-medium">{Math.min(10, filteredAppointments.length)}</span> de{" "}
-                <span className="font-medium">{filteredAppointments.length}</span> citas
+                <span className="font-medium">{appointmentsData?.totalElements || 0}</span> citas
               </div>
               <div className="flex space-x-2">
-                <Button variant="outline" size="sm">Anterior</Button>
-                <Button variant="default" size="sm">1</Button>
-                <Button variant="outline" size="sm">Siguiente</Button>
+                <Button variant="outline" size="sm" disabled={appointmentsData?.first}>Anterior</Button>
+                <Button variant="default" size="sm">{appointmentsData?.number ? appointmentsData.number + 1 : 1}</Button>
+                <Button variant="outline" size="sm" disabled={appointmentsData?.last}>Siguiente</Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Modal de Detalle de Cita */}
       {selectedAppointment && (
         <AppointmentDetail
           appointment={selectedAppointment}
-          mentors={mentors}
+          mentors={[]}
           onClose={() => setSelectedAppointment(null)}
           userRole="admin"
         />

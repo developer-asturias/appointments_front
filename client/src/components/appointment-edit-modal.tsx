@@ -43,7 +43,7 @@ type EditAppointmentFormData = z.infer<typeof editAppointmentSchema>;
 
 interface AppointmentEditModalProps {
   appointment: {
-    id: number;
+    appointmentId: number;
     userName: string;
     userEmail: string;
     phone: string;
@@ -114,7 +114,7 @@ export function AppointmentEditModal({ appointment, mentors, onClose, onSave }: 
         mentorId: data.mentorId ? parseInt(data.mentorId) : null
       };
       
-      const response = await apiRequest("PATCH", `/api/admin/appointments/${appointment.id}`, updateData);
+      const response = await apiRequest("PATCH", `/api/admin/appointments/${appointment.appointmentId}`, updateData);
       return response.json();
     },
     onSuccess: () => {
@@ -164,7 +164,7 @@ export function AppointmentEditModal({ appointment, mentors, onClose, onSave }: 
         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
           <div>
             <CardTitle className="text-xl font-semibold">Editar Cita</CardTitle>
-            <p className="text-sm text-gray-600">ID: {appointment.id}</p>
+            <p className="text-sm text-gray-600">ID: {appointment.appointmentId}</p>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
